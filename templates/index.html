@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>University Database Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; color: #222; }
+        h1 { font-size: 24px; }
+        h2 { font-size: 20px; margin-top: 28px; }
+        input, select, button { font: inherit; padding: 6px 8px; }
+        button, select { cursor: pointer; }
+        table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+        th, td { padding: 10px 6px; text-align: left; border-bottom: 1px solid #ddd; overflow-wrap: anywhere; }
+        .table-wrap { overflow-x: auto; }
+        .inline { display: inline; }
+        .actions { white-space: nowrap; }
+        .field { display: block; margin: 12px 0; }
+        .field input { display: block; margin-top: 4px; box-sizing: border-box; width: 100%; max-width: 340px; }
+        .error { color: #a00000; }
+        a { color: #164b8b; }
+    </style>
+</head>
+<body>
+    <h1>University Database Manager</h1>
+    <form method="get">
+        <label for="database">Database:</label>
+        <select id="database" name="database">
+            {% for key, database in databases.items() %}
+            <option value="{{ key }}" {% if key == selected %}selected{% endif %}>{{ database.title }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Open</button>
+    </form>
+
+    <h2>{{ config.title }}</h2>
+    <div class="table-wrap">
+    <table>
+        <thead><tr><th>ID</th><th>{{ config.labels[0] }}</th><th>{{ config.labels[1] }}</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td>
+                <td class="actions">
+                    <a href="{{ url_for('index', database=selected, edit=row[0]) }}">Edit</a>
+                    <form class="inline" method="post" action="{{ url_for('index', database=selected) }}" onsubmit="return confirm('Delete this record?');">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="id" value="{{ row[0] }}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">No records yet. Add one below.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <h2>{{ 'Edit record' if editing else 'Add record' }}</h2>
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    <form method="post" action="{{ url_for('index', database=selected) }}">
+        <input type="hidden" name="action" value="{{ 'update' if editing else 'add' }}">
+        {% if editing %}<input type="hidden" name="id" value="{{ editing[0] }}">{% endif %}
+        {% for i in range(2) %}
+        <label class="field">{{ config.labels[i] }}
+            <input name="{{ 'first' if i == 0 else 'second' }}" type="{{ config.types[i] }}" value="{{ values[i] }}" maxlength="100" required {% if config.types[i] == 'number' %}min="1" max="30" step="1"{% endif %}>
+        </label>
+        {% endfor %}
+        <button type="submit">{{ 'Save changes' if editing else 'Add record' }}</button>
+        {% if editing %}<a href="{{ url_for('index', database=selected) }}">Cancel</a>{% endif %}
+    </form>
+</body>
+</html>
